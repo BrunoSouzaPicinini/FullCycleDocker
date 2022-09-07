@@ -1,27 +1,42 @@
 version: "3"
 
+volumes:
+  mysql_data:
+  node_data:
+
 services: 
 
-  laravel: 
+  app:
     build:
-      context: ./laravel
-      dockerfile: Dockerfile.prod
-    image: brunosouzapicinini/laravel:prod
-    container_name: laravel
-    networks:
-      - laranet
-  
-  nginx: 
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.prod
-    image: brunosouzapicinini/nginx:prod
-    container_name: nginx
-    networks:
-      - laranet
+      dockerfile: Dockerfile
+      context: node
+    container_name: app
+    networks: 
+      - node-network
+    volumes:
+      - type: volume
+        target: /usr/src/app
+        source: node_data    
+    tty: true
     ports:
-      - "8080:80"
+      - "3000:3000"
+
+  db:
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0
+    container_name: db
+    restart: always
+    tty: true
+    volumes:
+      - type: volume
+        target: /var/lib/mysql
+        source: mysql_data  
+    environment: 
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - node-network
 
 networks: 
-  laranet:
+  node-network:
     driver: bridge
